@@ -9,7 +9,6 @@ const ESIM_API_URL = "https://esim-provider.com/api/purchase"; // Replace with y
 
 function App() {
     const [userAddress, setUserAddress] = useState('');
-    const [quantity, setQuantity] = useState(1);
     const [message, setMessage] = useState('');
     const [balance, setBalance] = useState('0');
     const [token, setToken] = useState('ETH');
@@ -39,7 +38,7 @@ function App() {
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
-            const totalAmount = (quantity * parseFloat(SIM_COST_ETH)).toFixed(3);
+            const totalAmount = parseFloat(SIM_COST_ETH).toFixed(3);
             
             const tx = await signer.sendTransaction({
                 to: CONTRACT_ADDRESS,
@@ -48,7 +47,7 @@ function App() {
             
             await tx.wait();
             
-            setMessage(`Payment of ${totalAmount} ETH for ${quantity} SIM(s) sent! Verifying...`);
+            setMessage(`Payment of ${totalAmount} ETH sent! Verifying...`);
             setTransactionHistory([...transactionHistory, { timestamp: new Date().toISOString(), amount: totalAmount }]);
             
             const response = await axios.post('/buy-esim', { userAddress, amount: totalAmount });
@@ -57,8 +56,7 @@ function App() {
                 
                 // Call the eSIM provider API
                 const esimResponse = await axios.post(ESIM_API_URL, {
-                    userAddress: userAddress,
-                    quantity: quantity
+                    userAddress: userAddress
                 });
 
                 if (esimResponse.data.success) {
@@ -88,13 +86,6 @@ function App() {
                     <option value="USDT">USDT</option>
                 </select>
             </div>
-            
-            <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-            />
             
             <input
                 type="text"

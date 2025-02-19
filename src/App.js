@@ -5,6 +5,7 @@ import axios from 'axios';
 const CONTRACT_ADDRESS = "0xYourContractAddress"; // Replace with your contract address
 const CONTRACT_ABI = require('./ESIMPaymentABI.json'); // Adjust the path as needed
 const SIM_COST_ETH = "0.01"; // Set the cost of one eSIM in Ether
+const ESIM_API_URL = "https://esim-provider.com/api/purchase"; // Replace with your eSIM provider API
 
 function App() {
     const [userAddress, setUserAddress] = useState('');
@@ -52,42 +53,25 @@ function App() {
             
             const response = await axios.post('/buy-esim', { userAddress, amount: totalAmount });
             if (response.data.success) {
-                setMessage(`eSIM Activated: ${response.data.esim}`);
+                setMessage(`Payment confirmed! Now purchasing eSIM...`);
+                
+                // Call the eSIM provider API
+                const esimResponse = await axios.post(ESIM_API_URL, {
+                    userAddress: userAddress,
+                    quantity: quantity
+                });
+
+                if (esimResponse.data.success) {
+                    setMessage(`eSIM Activated: ${esimResponse.data.esimCode}`);
+                } else {
+                    setMessage('Error: eSIM purchase failed.');
+                }
             } else {
                 setMessage('Error activating eSIM');
             }
         } catch (error) {
             console.error(error);
             setMessage('Transaction failed. Please try again.');
-        }
-    };
-
-    const handleAdminLogin = async () => {
-        const adminWallet = "0xYourAdminWalletAddress"; // Replace with actual admin wallet
-        if (!window.ethereum) return alert('Install MetaMask!');
-        
-        try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            const currentAddress = await signer.getAddress();
-            
-            if (currentAddress.toLowerCase() === adminWallet.toLowerCase()) {
-                setIsAdmin(true);
-                fetchAdminTransactions();
-            } else {
-                alert("Access denied: You are not the admin.");
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const fetchAdminTransactions = async () => {
-        try {
-            const response = await axios.get('/admin-transactions');
-            setAdminTransactions(response.data.transactions);
-        } catch (error) {
-            console.error("Error fetching admin transactions:", error);
         }
     };
 
@@ -128,21 +112,6 @@ function App() {
             </ul>
             
             <p>{message}</p>
-
-            <hr />
-            <h2>Admin Panel</h2>
-            {!isAdmin ? (
-                <button onClick={handleAdminLogin}>Login as Admin</button>
-            ) : (
-                <div>
-                    <h3>All Transactions</h3>
-                    <ul>
-                        {adminTransactions.map((txn, index) => (
-                            <li key={index}>{`User: ${txn.user}, Amount: ${txn.amount} ETH, Date: ${txn.timestamp}`}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
         </div>
     );
 }

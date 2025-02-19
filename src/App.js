@@ -15,6 +15,8 @@ function App() {
     const [token, setToken] = useState('ETH');
     const [transactionHistory, setTransactionHistory] = useState([]);
     const [userPurchases, setUserPurchases] = useState([]);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [username, setUsername] = useState('');
 
     useEffect(() => {
         if (window.ethereum) {
@@ -32,8 +34,23 @@ function App() {
         }
     }, []);
 
-    const handlePurchase = async () => {
+    const handleLogin = async () => {
         if (!window.ethereum) return alert('Install MetaMask!');
+        
+        try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const address = await signer.getAddress();
+            setUserAddress(address);
+            setIsLoggedIn(true);
+        } catch (error) {
+            console.error("Login error:", error);
+            alert('Login failed. Please try again.');
+        }
+    };
+
+    const handlePurchase = async () => {
+        if (!isLoggedIn) return alert('Please login first!');
         
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -82,37 +99,41 @@ function App() {
             <header>
                 <h1>eSIM Marketplace</h1>
             </header>
-            <section className="buy-section">
-                <h2>Buy eSIM with Crypto</h2>
-                <p>Each eSIM costs {SIM_COST_ETH} {token}</p>
-                <p>Your current balance: {balance} {token}</p>
-                
-                <div className="select-container">
-                    <label>Select payment token: </label>
-                    <select onChange={(e) => setToken(e.target.value)} value={token}>
-                        <option value="ETH">ETH</option>
-                        <option value="USDT">USDT</option>
-                    </select>
-                </div>
-                
-                <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Your Wallet Address"
-                    onChange={(e) => setUserAddress(e.target.value)}
-                />
-                
-                <button className="buy-button" onClick={handlePurchase}>Buy eSIM</button>
-            </section>
             
-            <section className="history-section">
-                <h2>Your Purchased eSIMs</h2>
-                <ul>
-                    {userPurchases.map((esim, index) => (
-                        <li key={index}>{`eSIM Code: ${esim.esimCode}, Date: ${esim.timestamp}`}</li>
-                    ))}
-                </ul>
-            </section>
+            {!isLoggedIn ? (
+                <section className="login-section">
+                    <h2>Login</h2>
+                    <button className="login-button" onClick={handleLogin}>Login with MetaMask</button>
+                </section>
+            ) : (
+                <>
+                    <section className="buy-section">
+                        <h2>Buy eSIM with Crypto</h2>
+                        <p>Each eSIM costs {SIM_COST_ETH} {token}</p>
+                        <p>Your current balance: {balance} {token}</p>
+                        <p>Logged in as: {userAddress}</p>
+                        
+                        <div className="select-container">
+                            <label>Select payment token: </label>
+                            <select onChange={(e) => setToken(e.target.value)} value={token}>
+                                <option value="ETH">ETH</option>
+                                <option value="USDT">USDT</option>
+                            </select>
+                        </div>
+                        
+                        <button className="buy-button" onClick={handlePurchase}>Buy eSIM</button>
+                    </section>
+                    
+                    <section className="history-section">
+                        <h2>Your Purchased eSIMs</h2>
+                        <ul>
+                            {userPurchases.map((esim, index) => (
+                                <li key={index}>{`eSIM Code: ${esim.esimCode}, Date: ${esim.timestamp}`}</li>
+                            ))}
+                        </ul>
+                    </section>
+                </>
+            )}
             
             <section className="message-section">
                 <p>{message}</p>

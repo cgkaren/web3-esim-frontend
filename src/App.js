@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import axios from 'axios';
+import './App.css';
 
 const CONTRACT_ADDRESS = "0xYourContractAddress"; // Replace with your contract address
 const CONTRACT_ABI = require('./ESIMPaymentABI.json'); // Adjust the path as needed
@@ -53,7 +54,6 @@ function App() {
             if (response.data.success) {
                 setMessage(`Payment confirmed! Now purchasing eSIM...`);
                 
-                // Call the eSIM provider API
                 const esimResponse = await axios.post(ESIM_API_URL, {
                     userAddress: userAddress
                 });
@@ -78,42 +78,45 @@ function App() {
     };
 
     return (
-        <div>
-            <h1>Buy eSIM with Crypto</h1>
-            <p>Each eSIM costs {SIM_COST_ETH} {token}</p>
-            <p>Your current balance: {balance} {token}</p>
+        <div className="container">
+            <header>
+                <h1>eSIM Marketplace</h1>
+            </header>
+            <section className="buy-section">
+                <h2>Buy eSIM with Crypto</h2>
+                <p>Each eSIM costs {SIM_COST_ETH} {token}</p>
+                <p>Your current balance: {balance} {token}</p>
+                
+                <div className="select-container">
+                    <label>Select payment token: </label>
+                    <select onChange={(e) => setToken(e.target.value)} value={token}>
+                        <option value="ETH">ETH</option>
+                        <option value="USDT">USDT</option>
+                    </select>
+                </div>
+                
+                <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Your Wallet Address"
+                    onChange={(e) => setUserAddress(e.target.value)}
+                />
+                
+                <button className="buy-button" onClick={handlePurchase}>Buy eSIM</button>
+            </section>
             
-            <div>
-                <label>Select payment token: </label>
-                <select onChange={(e) => setToken(e.target.value)} value={token}>
-                    <option value="ETH">ETH</option>
-                    <option value="USDT">USDT</option>
-                </select>
-            </div>
+            <section className="history-section">
+                <h2>Your Purchased eSIMs</h2>
+                <ul>
+                    {userPurchases.map((esim, index) => (
+                        <li key={index}>{`eSIM Code: ${esim.esimCode}, Date: ${esim.timestamp}`}</li>
+                    ))}
+                </ul>
+            </section>
             
-            <input
-                type="text"
-                placeholder="Your Wallet Address"
-                onChange={(e) => setUserAddress(e.target.value)}
-            />
-            
-            <button onClick={handlePurchase}>Buy eSIM</button>
-            
-            <h2>Transaction History</h2>
-            <ul>
-                {transactionHistory.map((txn, index) => (
-                    <li key={index}>{`Date: ${txn.timestamp}, Amount: ${txn.amount} ${token}`}</li>
-                ))}
-            </ul>
-            
-            <h2>Your Purchased eSIMs</h2>
-            <ul>
-                {userPurchases.map((esim, index) => (
-                    <li key={index}>{`eSIM Code: ${esim.esimCode}, Date: ${esim.timestamp}`}</li>
-                ))}
-            </ul>
-            
-            <p>{message}</p>
+            <section className="message-section">
+                <p>{message}</p>
+            </section>
         </div>
     );
 }

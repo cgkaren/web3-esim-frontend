@@ -13,8 +13,7 @@ function App() {
     const [balance, setBalance] = useState('0');
     const [token, setToken] = useState('ETH');
     const [transactionHistory, setTransactionHistory] = useState([]);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [adminTransactions, setAdminTransactions] = useState([]);
+    const [userPurchases, setUserPurchases] = useState([]);
 
     useEffect(() => {
         if (window.ethereum) {
@@ -60,6 +59,11 @@ function App() {
                 });
 
                 if (esimResponse.data.success) {
+                    const newEsim = {
+                        esimCode: esimResponse.data.esimCode,
+                        timestamp: new Date().toISOString()
+                    };
+                    setUserPurchases([...userPurchases, newEsim]);
                     setMessage(`eSIM Activated: ${esimResponse.data.esimCode}`);
                 } else {
                     setMessage('Error: eSIM purchase failed.');
@@ -99,6 +103,13 @@ function App() {
             <ul>
                 {transactionHistory.map((txn, index) => (
                     <li key={index}>{`Date: ${txn.timestamp}, Amount: ${txn.amount} ${token}`}</li>
+                ))}
+            </ul>
+            
+            <h2>Your Purchased eSIMs</h2>
+            <ul>
+                {userPurchases.map((esim, index) => (
+                    <li key={index}>{`eSIM Code: ${esim.esimCode}, Date: ${esim.timestamp}`}</li>
                 ))}
             </ul>
             

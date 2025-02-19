@@ -13,6 +13,8 @@ function App() {
     const [balance, setBalance] = useState('0');
     const [token, setToken] = useState('ETH');
     const [transactionHistory, setTransactionHistory] = useState([]);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [adminTransactions, setAdminTransactions] = useState([]);
 
     useEffect(() => {
         if (window.ethereum) {
@@ -60,6 +62,35 @@ function App() {
         }
     };
 
+    const handleAdminLogin = async () => {
+        const adminWallet = "0xYourAdminWalletAddress"; // Replace with actual admin wallet
+        if (!window.ethereum) return alert('Install MetaMask!');
+        
+        try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const currentAddress = await signer.getAddress();
+            
+            if (currentAddress.toLowerCase() === adminWallet.toLowerCase()) {
+                setIsAdmin(true);
+                fetchAdminTransactions();
+            } else {
+                alert("Access denied: You are not the admin.");
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const fetchAdminTransactions = async () => {
+        try {
+            const response = await axios.get('/admin-transactions');
+            setAdminTransactions(response.data.transactions);
+        } catch (error) {
+            console.error("Error fetching admin transactions:", error);
+        }
+    };
+
     return (
         <div>
             <h1>Buy eSIM with Crypto</h1>
@@ -97,6 +128,21 @@ function App() {
             </ul>
             
             <p>{message}</p>
+
+            <hr />
+            <h2>Admin Panel</h2>
+            {!isAdmin ? (
+                <button onClick={handleAdminLogin}>Login as Admin</button>
+            ) : (
+                <div>
+                    <h3>All Transactions</h3>
+                    <ul>
+                        {adminTransactions.map((txn, index) => (
+                            <li key={index}>{`User: ${txn.user}, Amount: ${txn.amount} ETH, Date: ${txn.timestamp}`}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 }
